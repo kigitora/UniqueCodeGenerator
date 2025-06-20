@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一意のコードジェネレーター</title>
+    <!-- Tailwind CSS CDNを読み込み -->
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを適用 */
+        /* Apply Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-blue-100 to-purple-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            一意のコードジェネレーター
+            <!-- Unique Code Generator -->
+        </h1>
+
+        <div class="mb-4">
+            <label for="postalCode" class="block text-gray-700 text-sm font-semibold mb-2">
+                郵便番号 (例: 123-4567)
+                <!-- Postal Code (e.g., 123-4567) -->
+            </label>
+            <input type="text" id="postalCode" placeholder="郵便番号を入力"
+                   class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
+                   <!-- Enter postal code -->
+        </div>
+
+        <div class="mb-6">
+            <label for="name" class="block text-gray-700 text-sm font-semibold mb-2">
+                食堂名 (例: 美味しい食堂)
+                <!-- Cafeteria Name (e.g., Delicious Cafeteria) -->
+            </label>
+            <input type="text" id="name" placeholder="食堂名を入力"
+                   class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
+                   <!-- Enter cafeteria name -->
+        </div>
+
+        <button id="generateButton"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105 shadow-md">
+            コードを生成
+            <!-- Generate Code -->
+        </button>
+
+        <div class="mt-6 p-4 bg-gray-100 rounded-lg text-center">
+            <p class="text-gray-700 text-sm font-semibold mb-2">
+                生成されたコード:
+                <!-- Generated Code: -->
+            </p>
+            <p id="resultCode" class="text-xl font-mono text-blue-800 break-words"></p>
+        </div>
+
+        <div id="errorMessage" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden" role="alert">
+            <!-- Error message container -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 郵便番号と名前から一意の8桁の英数字コードを生成します。
+         * The function generates a unique 8-character alphanumeric code from a postal code and a name.
+         * @param {string} postalCode - 郵便番号 (例: "123-4567") The postal code (e.g., "123-4567").
+         * @param {string} name - 名前 (例: "山田太郎") The name (e.g., "Taro Yamada").
+         * @returns {string} 8桁の英数字コード。入力が無効な場合は空文字列を返します。
+         * An 8-character alphanumeric code. Returns an empty string if inputs are invalid.
+         */
+        function generateUniqueCode(postalCode, name) {
+            const errorMessageDiv = document.getElementById('errorMessage');
+            errorMessageDiv.classList.add('hidden'); // エラーメッセージを非表示にする
+            // Hide the error message
+
+            // 入力値のバリデーション
+            // Validate inputs
+            if (typeof postalCode !== 'string' || typeof name !== 'string' || !postalCode.trim() || !name.trim()) {
+                errorMessageDiv.textContent = "エラー: 郵便番号と食堂名の両方を入力してください。";
+                // Error: Please enter both postal code and cafeteria name.
+                errorMessageDiv.classList.remove('hidden');
+                return "";
+            }
+
+            // 郵便番号からハイフンを除去
+            // Remove hyphens from the postal code
+            const cleanedPostalCode = postalCode.replace(/-/g, '');
+
+            // 結合された文字列を作成
+            // Create a combined string
+            const combinedString = cleanedPostalCode + name;
+
+            // 文字列をハッシュ化するための簡単な方法 (SHA-256のような強力なハッシュではありませんが、目的には十分です)
+            // A simple method to hash the string (not a strong hash like SHA-256, but sufficient for the purpose)
+            let hash = 0;
+            for (let i = 0; i < combinedString.length; i++) {
+                const char = combinedString.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // 32ビット整数に変換
+                // Convert to 32-bit integer
+            }
+
+            // ハッシュ値を正の数に変換
+            // Convert hash to a positive number
+            hash = Math.abs(hash);
+
+            // ハッシュ値を基に8桁の英数字コードを作成
+            // Create an 8-character alphanumeric code based on the hash
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let code = '';
+            const codeLength = 8;
+
+            for (let i = 0; i < codeLength; i++) {
+                // ハッシュ値の各ビットをシフトし、キャラクターセットのインデックスとして使用
+                // Shift bits of the hash value and use as an index into the character set
+                const index = (hash >> (i * 4)) % characters.length; // 4ビットずつ使用
+                // Use 4 bits at a time
+                code += characters.charAt(index);
+            }
+
+            // 生成されたコードが常に8桁であることを保証するために、必要に応じて切り捨てまたはパディングを行います。
+            // Ensure the generated code is always 8 characters by truncating or padding if necessary.
+            if (code.length > codeLength) {
+                code = code.substring(0, codeLength);
+            } else if (code.length < codeLength) {
+                // 短い場合は、残りをランダムな文字で埋める
+                // If too short, pad the rest with random characters
+                while (code.length < codeLength) {
+                    code += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+            }
+
+            return code;
+        }
+
+        // DOMが完全に読み込まれた後にイベントリスナーを追加
+        // Add event listener after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const postalCodeInput = document.getElementById('postalCode');
+            const nameInput = document.getElementById('name');
+            const generateBtn = document.getElementById('generateButton');
+            const resultCodeDisplay = document.getElementById('resultCode');
+
+            generateBtn.addEventListener('click', () => {
+                const postalCode = postalCodeInput.value;
+                const name = nameInput.value; // ここは食堂名になります
+                const uniqueCode = generateUniqueCode(postalCode, name);
+                resultCodeDisplay.textContent = uniqueCode;
+            });
+        });
+    </script>
+</body>
+</html>
